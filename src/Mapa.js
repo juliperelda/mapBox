@@ -125,22 +125,27 @@ const Mapa = () => {
         });
     }
 
-    console.log('geoJSON: ', geoJSON)
-
-    // useEffect(() => {
-    //     infoGeoJSON(idCliente);
-    // }, [])
-
-
     useEffect(() => {
 
         infoGeoJSON(2049);
 
     }, []);
 
+    console.log('geoJSON: ', geoJSON)
 
-    
 
+      //* geometria dibujada
+      map.on("draw.create", (e) => {
+        console.log(e.features[0].geometry.coordinates[0]);
+        const coordinates = e.features[0].geometry.coordinates[0];
+        const formattedCoordinates = JSON.stringify(coordinates, (key, value) => {
+          if (typeof value === "number") {
+            return value.toFixed(6);
+          }
+          return value;
+        }).replace(/"/g, '');
+        console.log(formattedCoordinates);
+      });
 
 
     return (
