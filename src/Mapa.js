@@ -82,7 +82,7 @@ const Mapa = () => {
                                 type: 'line',
                                 source: `lote-${item}`,
                                 paint: {
-                                    'line-color': '#B42222',
+                                    'line-color': 'rgba(255,212,2,1)',
                                     'line-opacity': 0.8
                                 }
                             });
@@ -92,7 +92,7 @@ const Mapa = () => {
                                 type: "fill",
                                 source: `lote-${item}`,
                                 paint: {
-                                  "fill-color": '#B42222',
+                                  "fill-color": 'rgba(255,212,2,0.6)',
                                 },
                               });
                         }
