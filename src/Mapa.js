@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import * as MapboxDraw from "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw";
@@ -13,6 +12,9 @@ const styles = {
 const Mapa = () => {
 
     const URL = process.env.REACT_APP_URL;
+
+    const [geoJSON, setGeoJSON] = useState([]);
+    const [dataGeoJSON, setDataGeoJSON] = useState([]);
 
     const MAPBOX_TOKEN =
         "pk.eyJ1IjoiZ29uemFsb2I5OCIsImEiOiJjazZtM2V2eHowbHJ2M2xwdTRjMXBncDJjIn0.C0dqUfziJu3E1o8lFxmfqQ";
@@ -43,21 +45,40 @@ const Mapa = () => {
                     },
                 });
                 map.addControl(draw);
-            });
+                // });
 
-            const geojson1 = {
-                type: 'FeatureCollection',
-                features: [
-                    {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Polygon',
-                            coordinates: [geoJSON],
-                        },
-                    },
-                ],
-            };
-            map.on(geojson1)
+
+                //!
+                map.addSource('markers', {
+                    type: 'geojson',
+                    data: {
+                        "type": "FeatureCollection",
+                        "features": [
+                            {
+                                "type": "Feature",
+                                "properties": {},
+                                "geometry": {
+                                    "coordinates": [geoJSON],
+                                    "type": "Polygon"
+                                }
+                            }
+                        ]
+                    }
+                });
+
+                map.addLayer({
+                    id: 'markerss',
+                    type: 'line',
+                    source: 'markers',
+                    paint: {
+                        // 'circle-radius': 6,
+                        'line-color': '#B42222',
+                        'line-opacity': 0.8
+                    }
+                });
+            });
+            //!
+
 
             //* centrado de viewport con turf
             const geojsonBounds = turf.bbox({
@@ -85,7 +106,16 @@ const Mapa = () => {
 
             //* geometria dibujada
             map.on("draw.create", (e) => {
-                console.log('hola: ', e);
+                // console.log('hola: ', e);
+                console.log(e.features[0].geometry.coordinates[0]);
+                const coordinates = e.features[0].geometry.coordinates[0];
+                const formattedCoordinates = JSON.stringify(coordinates, (key, value) => {
+                    if (typeof value === "number") {
+                        return value.toFixed(6);
+                    }
+                    return value;
+                }).replace(/"/g, '');
+                console.log('CoordenadaFOrm: ', formattedCoordinates);
             });
 
             map.on("dragend", (e) => {
@@ -97,11 +127,12 @@ const Mapa = () => {
     });
 
 
+
     // const idC = localStorage.getItem("cliente");
     //const idC = 2049;
     //const [idCliente, setIdCliente]=useState('2049');
 
-    const [geoJSON, setGeoJSON] = useState([]);
+    // const [geoJSON, setGeoJSON] = useState([]);
 
     function infoGeoJSON(idCliente) {
         const data = new FormData();
@@ -117,13 +148,37 @@ const Mapa = () => {
                     const objetoData = JSON.parse(data);
                     // const objetoData = JSON.parse(data.replace('2049',''));
                     console.log('objetoData: ', objetoData);
-                    setGeoJSON(objetoData[0].lot_geojson);
+                    setDataGeoJSON(objetoData[0].lot_geojson);
+                    desarmarGeoJSON();
                 } catch (e) {
                     console.error('Error parsing JSON: ', e);
                 }
             });
         });
     }
+
+
+    function desarmarGeoJSON() {
+        const parsedData = JSON.parse(dataGeoJSON);
+        const result = [];
+        for (let i = 0; i < parsedData.length; i++) {
+          const pair = parsedData[i];
+          const lon = parseFloat(pair[0]);
+          const lat = parseFloat(pair[1]);
+          result.push([lon, lat]);
+        }
+        setGeoJSON(result);
+        console.log('GeoJSON: ', geoJSON);
+    }
+      
+
+    useEffect(() => {
+        if (dataGeoJSON.length > 0) {
+          desarmarGeoJSON();
+        }
+      }, [dataGeoJSON]);
+      
+
 
     useEffect(() => {
 
@@ -134,18 +189,18 @@ const Mapa = () => {
     console.log('geoJSON: ', geoJSON)
 
 
-      //* geometria dibujada
-      map.on("draw.create", (e) => {
-        console.log(e.features[0].geometry.coordinates[0]);
-        const coordinates = e.features[0].geometry.coordinates[0];
-        const formattedCoordinates = JSON.stringify(coordinates, (key, value) => {
-          if (typeof value === "number") {
-            return value.toFixed(6);
-          }
-          return value;
-        }).replace(/"/g, '');
-        console.log(formattedCoordinates);
-      });
+    //   //* geometria dibujada
+    //   map.on("draw.create", (e) => {
+    //     console.log(e.features[0].geometry.coordinates[0]);
+    //     const coordinates = e.features[0].geometry.coordinates[0];
+    //     const formattedCoordinates = JSON.stringify(coordinates, (key, value) => {
+    //       if (typeof value === "number") {
+    //         return value.toFixed(6);
+    //       }
+    //       return value;
+    //     }).replace(/"/g, '');
+    //     console.log(formattedCoordinates);
+    //   });
 
 
     return (
