@@ -49,33 +49,57 @@ const Mapa = () => {
 
 
                 //!
-                map.addSource('markers', {
-                    type: 'geojson',
-                    data: {
-                        "type": "FeatureCollection",
-                        "features": [
-                            {
-                                "type": "Feature",
-                                "properties": {},
-                                "geometry": {
-                                    "coordinates": [geoJSON],
-                                    "type": "Polygon"
-                                }
-                            }
-                        ]
-                    }
-                });
+                if (geoJSON !== '') {
 
-                map.addLayer({
-                    id: 'markerss',
-                    type: 'line',
-                    source: 'markers',
-                    paint: {
-                        // 'circle-radius': 6,
-                        'line-color': '#B42222',
-                        'line-opacity': 0.8
+                    var random = 0;
+                    for (let i = 0; i < geoJSON.length; i++) {
+                        //const zone = dataGeoJSON[i];
+                        var item = 0;
+                        for (let j = 0; j < geoJSON[i].length; j++) {
+                            random = random + 1;
+                            item = j + random; 
+                            
+                            const lote = geoJSON[i][j];
+                            map.addSource(`lote-${item}`, {
+                                type: 'geojson',
+                                data: {
+                                    "type": "FeatureCollection",
+                                    "features": [
+                                        {
+                                            "type": "Feature",
+                                            "properties": {},
+                                            "geometry": {
+                                                "coordinates": [lote],
+                                                "type": "Polygon"
+                                            }
+                                        }
+                                    ]
+                                }
+                            });
+
+                            map.addLayer({
+                                id: `lote-layer-${item}`,
+                                type: 'line',
+                                source: `lote-${item}`,
+                                paint: {
+                                    'line-color': '#B42222',
+                                    'line-opacity': 0.8
+                                }
+                            });
+
+                            map.addLayer({
+                                id: `lote-fill-${item}`,
+                                type: "fill",
+                                source: `lote-${item}`,
+                                paint: {
+                                  "fill-color": '#B42222',
+                                },
+                              });
+                        }
+                        // random = 0
                     }
-                });
+
+                }
             });
             //!
 
@@ -132,8 +156,6 @@ const Mapa = () => {
     //const idC = 2049;
     //const [idCliente, setIdCliente]=useState('2049');
 
-    // const [geoJSON, setGeoJSON] = useState([]);
-
     function infoGeoJSON(idCliente) {
         const data = new FormData();
         data.append("idC", idCliente);
@@ -143,65 +165,50 @@ const Mapa = () => {
             body: data,
         }).then(function (response) {
             response.text().then((resp) => {
-                try {
-                    const data = resp;
-                    const objetoData = JSON.parse(data);
-                    // const objetoData = JSON.parse(data.replace('2049',''));
-                    console.log('objetoData: ', objetoData);
-                    setDataGeoJSON(objetoData[0].lot_geojson);
-                    desarmarGeoJSON();
-                } catch (e) {
-                    console.error('Error parsing JSON: ', e);
-                }
+                const data = resp;
+                const objetoData = JSON.parse(data);
+                // const objetoData = JSON.parse(data.replace('2049',''));
+                console.log('objetoData: ', objetoData);
+                //setDataGeoJSON(objetoData[0].lot_geojson);
+                setDataGeoJSON(objetoData);
+                // desarmarGeoJSON();
             });
         });
     }
 
-
+    var result = [];
     function desarmarGeoJSON() {
-        const parsedData = JSON.parse(dataGeoJSON);
-        const result = [];
-        for (let i = 0; i < parsedData.length; i++) {
-          const pair = parsedData[i];
-          const lon = parseFloat(pair[0]);
-          const lat = parseFloat(pair[1]);
-          result.push([lon, lat]);
+        var lengthDG = dataGeoJSON.length;
+        var coordLotes = [];
+        console.log(lengthDG);
+        for (let i = 0; i < lengthDG; i++) {
+            const element = dataGeoJSON[i].lot_geojson;
+            const parsedData = JSON.parse(element);
+            for (let i = 0; i < parsedData.length; i++) {
+                const pair = parsedData[i];
+                const lon = parseFloat(pair[0]);
+                const lat = parseFloat(pair[1]);
+                coordLotes.push([lon, lat]);
+                console.log('coordLotes: ', coordLotes);
+            }
+            result.push([coordLotes]);
+            coordLotes = [];
+            console.log("lotes: ", result);
         }
         setGeoJSON(result);
-        console.log('GeoJSON: ', geoJSON);
     }
-      
 
     useEffect(() => {
         if (dataGeoJSON.length > 0) {
-          desarmarGeoJSON();
+            desarmarGeoJSON();
         }
-      }, [dataGeoJSON]);
-      
-
+    }, [dataGeoJSON]);
 
     useEffect(() => {
-
         infoGeoJSON(2049);
-
     }, []);
 
     console.log('geoJSON: ', geoJSON)
-
-
-    //   //* geometria dibujada
-    //   map.on("draw.create", (e) => {
-    //     console.log(e.features[0].geometry.coordinates[0]);
-    //     const coordinates = e.features[0].geometry.coordinates[0];
-    //     const formattedCoordinates = JSON.stringify(coordinates, (key, value) => {
-    //       if (typeof value === "number") {
-    //         return value.toFixed(6);
-    //       }
-    //       return value;
-    //     }).replace(/"/g, '');
-    //     console.log(formattedCoordinates);
-    //   });
-
 
     return (
         <>
